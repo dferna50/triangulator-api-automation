@@ -1,0 +1,594 @@
+openapi: 3.0.3
+info:
+  title: Public APIs Automation
+  version: 1.0.0
+  description: API for course inventory, equivalencies, rules, and catalog management
+servers:
+- url: https://api-qa.creditmobility.net
+  description: QA Environment
+security:
+- AccessToken: []
+components:
+  securitySchemes:
+    AccessToken:
+      type: apiKey
+      in: header
+      name: x-access-token
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        status_code:
+          type: integer
+    PresignedUrlRequest:
+      type: object
+      required:
+      - file_name
+      - institution_id
+      - upload_type
+      properties:
+        file_name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          pattern: ^[a-zA-Z0-9_\-\.]+\.(csv|CSV)$
+        institution_id:
+          type: string
+          pattern: ^\d+$
+        upload_type:
+          type: string
+          enum:
+          - add
+          - update
+          - delete
+        file_category:
+          type: string
+          enum:
+          - courseCatalog
+          - rules
+    PresignedUrlResponse:
+      type: object
+      properties:
+        presigned_url:
+          type: string
+          format: uri
+        file_path:
+          type: string
+    ConsumeRulesRequest:
+      type: object
+      required:
+      - file_name
+      - upload_type
+      properties:
+        file_name:
+          type: string
+          pattern: ^s3://[a-zA-Z0-9\-]+/.+\.csv$
+        upload_type:
+          type: string
+          enum:
+          - add
+          - update
+          - delete
+    ConsumeCatalogRequest:
+      type: object
+      required:
+      - file_name
+      - upload_type
+      properties:
+        file_name:
+          type: string
+          pattern: ^s3://[a-zA-Z0-9\-]+/.+\.csv$
+        upload_type:
+          type: string
+          enum:
+          - add
+          - update
+          - delete
+    EquivalenciesExportRequest:
+      type: object
+      properties:
+        end_date:
+          type: string
+          format: date
+        export_type:
+          type: string
+          enum:
+          - SIMPLE
+          - NESTED
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 10000
+        min_confidence_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        offset:
+          type: integer
+          minimum: 0
+        record_type:
+          type: string
+          enum:
+          - MODIFIED_RULES
+          - ACCEPTED_SUGGESTIONS
+          - OPEN_SUGGESTIONS
+          - BOTH
+        target_subjects:
+          type: array
+          items:
+            type: string
+            pattern: ^[A-Z]{2,4}$
+        rule_identifier:
+          type: string
+        suggestion_type:
+          type: string
+          enum:
+          - TRIANGULATION
+          - MANUAL
+        external_request_id:
+          type: string
+          format: uuid
+        source_inst_ids:
+          type: array
+          items:
+            type: integer
+        source_states:
+          type: array
+          items:
+            type: string
+            enum:
+            - AL
+            - AK
+            - AZ
+            - AR
+            - CA
+            - CO
+            - CT
+            - DE
+            - FL
+            - GA
+            - HI
+            - ID
+            - IL
+            - IN
+            - IA
+            - KS
+            - KY
+            - LA
+            - ME
+            - MD
+            - MA
+            - MI
+            - MN
+            - MS
+            - MO
+            - MT
+            - NE
+            - NV
+            - NH
+            - NJ
+            - NM
+            - NY
+            - NC
+            - ND
+            - OH
+            - OK
+            - OR
+            - PA
+            - RI
+            - SC
+            - SD
+            - TN
+            - TX
+            - UT
+            - VT
+            - VA
+            - WA
+            - WV
+            - WI
+            - WY
+            - AS
+            - DC
+            - FM
+            - GU
+            - MH
+            - MP
+            - PR
+            - PW
+            - VI
+        start_date:
+          type: string
+          format: date
+        suggestion_identifier:
+          type: string
+        zip:
+          type: boolean
+    SuggestionDecisionRequest:
+      type: object
+      required:
+      - suggestion_decision
+      - suggestion_id
+      properties:
+        rejection_reasons:
+          type: array
+          items:
+            type: string
+            enum:
+            - ACCURACY__BETTER_MATCH_AVAILABLE
+            - ACCURACY__EXISTING_RULE
+            - ACCURACY__GRADUATE_LEVEL_SOURCE
+            - ACCURACY__GRADUATE_LEVEL_TARGET
+            - ACCURACY__INACCURATE_SOURCE_COMBINATION
+            - ACCURACY__INACCURATE_TARGET_COMBINATION
+            - ACCURACY__INACTIVE_SOURCE_COURSE
+            - ACCURACY__INACTIVE_TARGET_COURSE
+            - ACCURACY__NOT_EQUIVALENT
+            - ACCURACY__SUBJECT_DIFFERENCE
+            - GRADUATE_LEVEL
+            - QUALITY__INACCURATE_SOURCE_DATA
+            - QUALITY__INACCURATE_TARGET_DATA
+            - QUALITY__NOT_ENOUGH_SOURCE_DATA
+            - QUALITY__NOT_ENOUGH_TARGET_DATA
+            - QUALITY__SOURCE_DATA_MISSING
+            - QUALITY__SOURCE_SEQUENCE_NEEDED
+            - QUALITY__TARGET_DATA_MISSING
+            - TRANSFER_POLICY__CREDIT_DIFFERENCE
+            - TRANSFER_POLICY__GENERAL_POLICY_OR_PRACTICE
+            - TRANSFER_POLICY__INSTITUTION_ACCREDITATION
+            - TRANSFER_POLICY__LEVEL_DIFFERENCE
+            - TRANSFER_POLICY__NEEDS_SECOND_REVIEW
+            - TRANSFER_POLICY__PROGRAM_ACCREDITATION
+            - TRANSFER_POLICY__REMEDIAL
+            - TRANSFER_POLICY__VOCATIONAL
+        suggestion_decision:
+          type: string
+          enum:
+          - ACCEPT
+          - REJECT
+        suggestion_id:
+          type: string
+          pattern: ^\d+$
+    SuggestionFindOrCreateRequest:
+      type: object
+      required:
+      - course_number
+      - course_subject
+      - institution_id
+      properties:
+        course_number:
+          type: string
+          pattern: ^[0-9A-Z]+$
+        course_subject:
+          type: string
+          pattern: ^[A-Z]{2,4}$
+        institution_id:
+          type: string
+          pattern: ^\d+$
+paths:
+  /publish-course-inventory:
+    get:
+      summary: Publish Course Inventory
+      operationId: publishCourseInventory
+      security:
+      - AccessToken: []
+      parameters:
+      - name: CourseGenedCategoryCode
+        in: query
+        schema:
+          type: string
+      - name: CourseEffectiveDate
+        in: query
+        schema:
+          type: string
+          pattern: ^\d{4}-\d{2}$
+      - name: CourseExpirationDate
+        in: query
+        schema:
+          type: string
+          pattern: ^\d{4}-\d{2}$
+      - name: ActiveIndicator
+        in: query
+        schema:
+          type: boolean
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 10000
+      - name: zip
+        in: query
+        schema:
+          type: boolean
+      - name: CourseCreditUnits
+        in: query
+        schema:
+          type: number
+          minimum: 0
+          maximum: 20
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 10000
+      - name: institution_id
+        in: query
+        required: true
+        schema:
+          type: string
+          pattern: ^\d+$
+      - name: CourseSubject
+        in: query
+        schema:
+          type: string
+          pattern: ^[A-Z]{2,4}$
+      - name: CourseNumber
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404': &id001
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429': &id002
+          description: Rate Limit Exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500': &id003
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '502': &id004
+          description: Bad Gateway
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /equivalencies-export:
+    post:
+      summary: Export Equivalencies
+      operationId: exportEquivalencies
+      security:
+      - AccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquivalenciesExportRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404': *id001
+        '429': *id002
+        '500': *id003
+        '502': *id004
+  /get-presigned-url:
+    post:
+      summary: Get Presigned URL for file upload
+      operationId: getPresignedUrl
+      security:
+      - AccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PresignedUrlRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PresignedUrlResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404': *id001
+        '429': *id002
+        '500': *id003
+        '502': *id004
+  /consume-rules:
+    post:
+      summary: Consume Rules from S3
+      operationId: consumeRules
+      security:
+      - AccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsumeRulesRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404': *id001
+        '429': *id002
+        '500': *id003
+        '502': *id004
+  /consume-course-inventory:
+    post:
+      summary: Consume Course Inventory from S3
+      operationId: consumeCourseInventory
+      security:
+      - AccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsumeCatalogRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404': *id001
+        '429': *id002
+        '500': *id003
+        '502': *id004
+  /consume-suggestion-decision:
+    post:
+      summary: Consume Suggestion Decision
+      operationId: consumeSuggestionDecision
+      security:
+      - AccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuggestionDecisionRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404': *id001
+        '429': *id002
+        '500': *id003
+        '502': *id004
+  /suggestion-find-or-create:
+    post:
+      summary: Find or Create Suggestion
+      operationId: suggestionFindOrCreate
+      security:
+      - AccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuggestionFindOrCreateRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404': *id001
+        '429': *id002
+        '500': *id003
+        '502': *id004

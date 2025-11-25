@@ -1,0 +1,112 @@
+"""
+Pytest configuration and shared fixtures
+"""
+
+import pytest
+import os
+from datetime import datetime
+from typing import Dict
+from hypothesis import settings, Verbosity, Phase
+
+# ========== HYPOTHESIS PROFILES ==========
+# These control how many test examples Hypothesis generates
+
+# CI Profile - Fast, for CI/CD pipelines
+settings.register_profile(
+    "ci",
+    max_examples=10,           # ← Change this to increase tests
+    deadline=5000,             # 5 seconds per example
+    suppress_health_check=[],
+    phases=[Phase.explicit, Phase.reuse, Phase.generate, Phase.target]
+)
+
+# Fast Profile - Quick testing during development (DEFAULT)
+settings.register_profile(
+    "fast",
+    max_examples=20,           # ← Change this to increase tests
+    deadline=10000,            # 10 seconds per example
+    suppress_health_check=[],
+    phases=[Phase.explicit, Phase.reuse, Phase.generate, Phase.target]
+)
+
+# Default Profile - Balanced testing
+settings.register_profile(
+    "default",
+    max_examples=50,           # ← Change this to increase tests
+    deadline=30000,            # 30 seconds per example
+    suppress_health_check=[],
+    phases=[Phase.explicit, Phase.reuse, Phase.generate, Phase.target]
+)
+
+# Thorough Profile - Comprehensive testing for releases
+settings.register_profile(
+    "thorough",
+    max_examples=200,          # ← Increased from 100 to 200
+    deadline=None,             # No deadline
+    suppress_health_check=[],
+    phases=[Phase.explicit, Phase.reuse, Phase.generate, Phase.target]
+)
+
+# Exhaustive Profile - Maximum testing (very slow!)
+settings.register_profile(
+    "exhaustive",
+    max_examples=500,          # ← Change this to increase tests
+    deadline=None,             # No deadline
+    suppress_health_check=[],
+    phases=[Phase.explicit, Phase.reuse, Phase.generate, Phase.target]
+)
+
+# Load profile from environment or use 'fast' as default
+settings.load_profile(os.getenv("HYPOTHESIS_PROFILE", "fast"))
+
+# ========== PYTEST CONFIGURATION ==========
+
+def pytest_configure(config):
+    """Register custom markers"""
+    config.addinivalue_line("markers", "security: Security-focused tests")
+    config.addinivalue_line("markers", "property: Property-based tests")
+    config.addinivalue_line("markers", "stateful: Stateful workflow tests")
+    config.addinivalue_line("markers", "slow: Slow-running tests")
+    config.addinivalue_line("markers", "integration: Integration tests")
+    config.addinivalue_line("markers", "smoke: Quick smoke tests")
+    config.addinivalue_line("markers", "regression: Regression tests")
+
+
+# ========== FIXTURES ==========
+
+@pytest.fixture(scope="session")
+def base_url() -> str:
+    """Get API base URL from environment"""
+    url = os.getenv("BASE_URL")
+    if not url:
+        pytest.skip("BASE_URL not set in environment")
+    return url
+
+
+@pytest.fixture(scope="session")
+def access_token() -> str:
+    """Get access token from environment"""
+    token = os.getenv("ACCESS_TOKEN")
+    if not token:
+        pytest.skip("ACCESS_TOKEN not set in environment")
+    return token
+
+
+@pytest.fixture(scope="session")
+def auth_headers(access_token: str) -> Dict[str, str]:
+    """Get authentication headers"""
+    return {"x-access-token": access_token}
+
+
+@pytest.fixture(autouse=True)
+def monitor_test_performance(request):
+    """Monitor test execution time"""
+    start_time = datetime.now()
+    
+    yield
+    
+    duration = (datetime.now() - start_time).total_seconds()
+    
+    # Log slow tests
+    if duration > 10:
+        print(f"\n⚠️  Slow test: {request.node.name} took {duration:.2f}s")

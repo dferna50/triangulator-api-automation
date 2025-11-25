@@ -1,0 +1,28 @@
+# Core testing frameworks
+schemathesis==3.27.1
+pytest==7.4.3
+hypothesis==6.92.1
+requests>=2.32.3
+
+# Additional testing utilities
+pytest-xdist==3.5.0  # Parallel test execution
+pytest-timeout==2.2.0  # Test timeouts
+pytest-html==4.1.1  # HTML reports
+pytest-json-report==1.5.0  # JSON reports
+pytest-cov==4.1.0  # Coverage reporting
+
+# API testing
+jsonschema==4.20.0
+pyyaml==6.0.1
+faker==22.0.0  # Generate fake data
+
+# Performance testing
+locust==2.20.0  # Load testing (optional)
+
+# Security testing
+safety==3.0.1  # Check for known vulnerabilities
+
+# Development tools
+black==23.12.1  # Code formatting
+flake8==7.0.0  # Linting
+mypy==1.8.0  # Type checking
