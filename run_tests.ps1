@@ -144,8 +144,7 @@ Write-Host ""
 
 $startTime = Get-Date
 
-& $pytestCmd $pytestArgs
-
+& python -m pytest $pytestArgs
 $exitCode = $LASTEXITCODE
 $endTime = Get-Date
 $duration = $endTime - $startTime

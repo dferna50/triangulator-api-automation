@@ -6,6 +6,7 @@ import pytest
 import requests
 import os
 import time
+from typing import Optional, Dict
 from requests.exceptions import Timeout, ConnectionError
 
 # Configuration
@@ -18,6 +19,24 @@ if not ACCESS_TOKEN:
     pytest.skip("ACCESS_TOKEN not set in environment", allow_module_level=True)
 
 
+# ========== HELPER FUNCTIONS ==========
+
+def make_get_request(endpoint: str, params: Optional[Dict] = None, timeout: int = 10) -> requests.Response:
+    """Make GET request with consistent headers"""
+    return requests.get(
+        f"{BASE_URL}{endpoint}",
+        headers={"x-access-token": ACCESS_TOKEN},
+        params=params,
+        timeout=timeout
+    )
+
+
+def assert_valid_status(response: requests.Response) -> None:
+    """Assert response has valid status code"""
+    assert response.status_code in [200, 400, 401, 404, 429, 500, 502], \
+        f"Expected valid status, got {response.status_code}"
+
+
 class TestRetryLogic:
     """Tests for retry logic and transient failure handling"""
     
@@ -25,16 +44,11 @@ class TestRetryLogic:
     def test_retry_transient_failures(self):
         """TC-ERR-001: Verify client can retry after transient failures"""
         max_retries = 3
-        retry_delay = 1  # seconds
+        retry_delay = 1
         
         for attempt in range(max_retries):
             try:
-                response = requests.get(
-                    f"{BASE_URL}/publish-course-inventory",
-                    headers={"x-access-token": ACCESS_TOKEN},
-                    params={"institution_id": "227216"},
-                    timeout=10
-                )
+                response = make_get_request("/publish-course-inventory", params={"institution_id": "227216"})
                 
                 # If we get a transient error (502, 503), retry
                 if response.status_code in [502, 503]:
@@ -43,7 +57,7 @@ class TestRetryLogic:
                         continue
                 
                 # Success or permanent error
-                assert response.status_code in [200, 400, 401, 404, 429, 500, 502, 503]
+                assert_valid_status(response)
                 break
                 
             except (Timeout, ConnectionError):
@@ -55,27 +69,18 @@ class TestRetryLogic:
     @pytest.mark.resilience
     def test_rate_limit_recovery(self):
         """TC-ERR-006: Verify client can recover after rate limiting"""
-        # Make requests until we hit rate limit
         for i in range(10):
-            response = requests.get(
-                f"{BASE_URL}/publish-course-inventory",
-                headers={"x-access-token": ACCESS_TOKEN},
-                params={"institution_id": "227216"}
-            )
+            response = make_get_request("/publish-course-inventory", params={"institution_id": "227216"})
             
             if response.status_code == 429:
                 # Hit rate limit, wait and retry
                 time.sleep(2)
                 
                 # Retry after waiting
-                retry_response = requests.get(
-                    f"{BASE_URL}/publish-course-inventory",
-                    headers={"x-access-token": ACCESS_TOKEN},
-                    params={"institution_id": "227216"}
-                )
+                retry_response = make_get_request("/publish-course-inventory", params={"institution_id": "227216"})
                 
                 # Should succeed or still be rate limited
-                assert retry_response.status_code in [200, 400, 401, 404, 429, 500, 502]
+                assert_valid_status(retry_response)
                 break
 
 
@@ -87,16 +92,10 @@ class TestTimeoutHandling:
     def test_timeout_handling(self):
         """TC-ERR-002: Verify client handles slow responses gracefully"""
         try:
-            response = requests.get(
-                f"{BASE_URL}/publish-course-inventory",
-                headers={"x-access-token": ACCESS_TOKEN},
-                params={"institution_id": "227216"},
-                timeout=30  # 30 second timeout
-            )
+            response = make_get_request("/publish-course-inventory", params={"institution_id": "227216"}, timeout=30)
             # If we get a response, it should be valid
-            assert response.status_code in [200, 400, 401, 404, 429, 500, 502]
+            assert_valid_status(response)
         except Timeout:
-            # Timeout is acceptable - we're testing timeout handling
             pytest.skip("Request timed out (expected behavior for slow endpoint)")
 
 
@@ -126,17 +125,12 @@ class TestResponseHandling:
     @pytest.mark.resilience
     def test_partial_response(self):
         """TC-ERR-004: Verify client handles incomplete responses"""
-        response = requests.get(
-            f"{BASE_URL}/publish-course-inventory",
-            headers={"x-access-token": ACCESS_TOKEN},
-            params={"institution_id": "227216"}
-        )
+        response = make_get_request("/publish-course-inventory", params={"institution_id": "227216"})
         
         # Verify we can parse the response
         try:
             if response.status_code == 200:
                 data = response.json()
-                # Response should be valid JSON
                 assert isinstance(data, (dict, list))
         except ValueError:
             # If JSON parsing fails, response should not be 200
@@ -145,11 +139,7 @@ class TestResponseHandling:
     @pytest.mark.resilience
     def test_malformed_json(self):
         """TC-ERR-005: Verify client handles malformed JSON"""
-        response = requests.get(
-            f"{BASE_URL}/publish-course-inventory",
-            headers={"x-access-token": ACCESS_TOKEN},
-            params={"institution_id": "227216"}
-        )
+        response = make_get_request("/publish-course-inventory", params={"institution_id": "227216"})
         
         # If status is 200, JSON should be valid
         if response.status_code == 200:
@@ -158,9 +148,6 @@ class TestResponseHandling:
                 assert data is not None
             except ValueError:
                 pytest.fail("200 response with invalid JSON")
-        else:
-            # Non-200 responses may have invalid JSON
-            pass
 
 
 class TestAuthenticationHandling:
@@ -189,29 +176,21 @@ class TestGracefulDegradation:
     @pytest.mark.slow
     def test_graceful_degradation(self):
         """TC-ERR-008: Verify API degrades gracefully under load"""
-        # Send multiple requests quickly
         responses = []
         for i in range(20):
             try:
-                response = requests.get(
-                    f"{BASE_URL}/publish-course-inventory",
-                    headers={"x-access-token": ACCESS_TOKEN},
-                    params={"institution_id": "227216"},
-                    timeout=10
-                )
+                response = make_get_request("/publish-course-inventory", params={"institution_id": "227216"})
                 responses.append(response.status_code)
             except (Timeout, ConnectionError):
-                responses.append(0)  # Connection failed
+                responses.append(0)
         
         # Count successful responses
         success_count = sum(1 for code in responses if code == 200)
         rate_limited = sum(1 for code in responses if code == 429)
         
         # System should either succeed or rate limit, not crash
-        # At least some requests should get a valid response
-        assert success_count + rate_limited > 0
+        assert success_count + rate_limited > 0, "No valid responses under load"
         
-        # No server errors (500, 502, 503) should occur
+        # No server errors should occur
         server_errors = sum(1 for code in responses if code in [500, 502, 503])
-        # Allow some server errors under load, but not all
-        assert server_errors < len(responses)
+        assert server_errors < len(responses), "Too many server errors under load"

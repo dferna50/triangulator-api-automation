@@ -1,0 +1,4 @@
+InstitutionUniqueIdentifier,CourseIdentifier,CourseSubject,CourseNumber,CourseLongTitle,CourseLongDepartmentName,CourseDescription,CourseCreditUnits,CourseCreditMinimumValue,CourseCreditMaximumValue,CourseLevel,GenedCategoryCode,CoursePrerequisiteID,CourseCorequisiteID,CourseAntirequisiteID,ActiveCourseIndicator,CourseEffectiveYearMonth,CourseExpirationYearMonth
+109208,AUTOLpQttk8N0,ENG,DEC,A History of LGBTQ Music,Department of Music,dis,Semester,,3,UpperDivision,,,,,TRUE,1901-01,9999-01
+109208,AUTOyeypYZqV4,ENG,222,A History of LGBTQ Music,Department of Music,dis,Semester,3,3,UpperDivision,,,,,TRUE,1901-01,9999-01
+109208,AUTO0S8Zh7TlI,ENG,202,A History of LGBTQ Music,Department of Music,dis,Semester,3,3,UpperDivision,,,,,TRUE,1901-01,9999-01

@@ -236,7 +236,7 @@ class TestPublishCourseInventoryProperties:
                 "page_size": page_size
             }
         )
-        assert response.status_code in [200, 404, 429, 500, 502]  # Accept rate limit and server errors, f"Unexpected status: {response.status_code}"
+        assert response.status_code in [200, 404, 429, 500, 502], f"Unexpected status: {response.status_code}"
     
     # REMOVED: API does not have institution_id parameter
     # User feedback: "does not have a parameter institution_id please remove"

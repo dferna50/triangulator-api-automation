@@ -7,6 +7,14 @@ import os
 from datetime import datetime
 from typing import Dict
 from hypothesis import settings, Verbosity, Phase
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # ========== HYPOTHESIS PROFILES ==========
 # These control how many test examples Hypothesis generates
@@ -70,6 +78,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "integration: Integration tests")
     config.addinivalue_line("markers", "smoke: Quick smoke tests")
     config.addinivalue_line("markers", "regression: Regression tests")
+    config.addinivalue_line("markers", "csv_upload: CSV upload workflow tests")
 
 
 # ========== FIXTURES ==========
@@ -96,6 +105,27 @@ def access_token() -> str:
 def auth_headers(access_token: str) -> Dict[str, str]:
     """Get authentication headers"""
     return {"x-access-token": access_token}
+
+
+@pytest.fixture(scope="session")
+def api_client(base_url: str, access_token: str):
+    """Get API client instance"""
+    from helpers import APIClient
+    return APIClient(base_url, access_token)
+
+
+@pytest.fixture(scope="session")
+def retry_strategy():
+    """Get retry strategy instance"""
+    from helpers import RetryStrategy
+    return RetryStrategy(max_retries=3, initial_delay=1.0)
+
+
+@pytest.fixture(scope="session")
+def test_data():
+    """Get common test data constants"""
+    from helpers import TestDataConstants
+    return TestDataConstants()
 
 
 @pytest.fixture(autouse=True)

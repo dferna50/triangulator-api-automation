@@ -6,6 +6,7 @@ They complement the existing property-based and parametrized tests.
 import pytest
 import requests
 import os
+from typing import Dict, Optional
 
 # Configuration
 BASE_URL = os.getenv("BASE_URL")
@@ -15,6 +16,43 @@ if not BASE_URL:
     pytest.skip("BASE_URL not set in environment", allow_module_level=True)
 if not ACCESS_TOKEN:
     pytest.skip("ACCESS_TOKEN not set in environment", allow_module_level=True)
+
+
+# ========== HELPER FUNCTIONS ==========
+
+def make_get_request(endpoint: str, params: Optional[Dict] = None) -> requests.Response:
+    """Make GET request with consistent headers"""
+    return requests.get(
+        f"{BASE_URL}{endpoint}",
+        headers={"x-access-token": ACCESS_TOKEN},
+        params=params
+    )
+
+
+def make_post_request(endpoint: str, json_data: Optional[Dict] = None) -> requests.Response:
+    """Make POST request with consistent headers"""
+    return requests.post(
+        f"{BASE_URL}{endpoint}",
+        headers={"x-access-token": ACCESS_TOKEN, "Content-Type": "application/json"},
+        json=json_data
+    )
+
+
+def assert_success_or_error(response: requests.Response, expected_success: bool = True) -> None:
+    """Assert response has valid status code
+    
+    Args:
+        response: Response object
+        expected_success: If True, allow 200/401/500/502. If False, allow 400/401/404/422/500/502
+    """
+    if expected_success:
+        # Valid request: success or auth/server error
+        assert response.status_code in [200, 401, 500, 502], \
+            f"Expected 200/401/500/502, got {response.status_code}"
+    else:
+        # Invalid request: client error or auth/server error
+        assert response.status_code in [400, 401, 404, 422, 500, 502], \
+            f"Expected error status, got {response.status_code}"
 
 
 class TestPublishCourseInventoryExplicit:

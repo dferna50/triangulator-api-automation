@@ -1,0 +1,4 @@
+InstitutionUniqueIdentifier,CourseIdentifier,CourseSubject,CourseNumber,CourseLongDepartmentName,CourseDescription,CourseCreditUnits,CourseCreditMinimumValue,CourseCreditMaximumValue,CourseLevel,GenedCategoryCode,CoursePrerequisiteID,CourseCorequisiteID,CourseAntirequisiteID,ActiveCourseIndicator,CourseEffectiveYearMonth,CourseExpirationYearMonth
+109208,AUTONWlxyesbB,ENG,DEC,Department of Music,dis,Semester,3,3,UpperDivision,,,,,TRUE,1901-01,9999-01
+109208,AUTOJZqBsUBCJ,ENG,222,Department of Music,dis,Semester,3,3,UpperDivision,,,,,TRUE,1901-01,9999-01
+109208,AUTOW0LCG2PuY,ENG,202,Department of Music,dis,Semester,3,3,UpperDivision,,,,,TRUE,1901-01,9999-01

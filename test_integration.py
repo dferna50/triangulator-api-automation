@@ -6,7 +6,7 @@ import pytest
 import requests
 import os
 import time
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 # Configuration
 BASE_URL = os.getenv("BASE_URL")
@@ -18,6 +18,32 @@ if not ACCESS_TOKEN:
     pytest.skip("ACCESS_TOKEN not set in environment", allow_module_level=True)
 
 
+# ========== HELPER FUNCTIONS ==========
+
+def make_post_request(endpoint: str, json_data: Optional[Dict] = None) -> requests.Response:
+    """Make POST request with consistent headers"""
+    return requests.post(
+        f"{BASE_URL}{endpoint}",
+        headers={"x-access-token": ACCESS_TOKEN, "Content-Type": "application/json"},
+        json=json_data
+    )
+
+
+def make_get_request(endpoint: str, params: Optional[Dict] = None) -> requests.Response:
+    """Make GET request with consistent headers"""
+    return requests.get(
+        f"{BASE_URL}{endpoint}",
+        headers={"x-access-token": ACCESS_TOKEN},
+        params=params
+    )
+
+
+def assert_workflow_response(response: requests.Response) -> None:
+    """Assert response is valid for workflow steps"""
+    assert response.status_code in [200, 400, 401, 404, 429, 500, 502], \
+        f"Expected valid workflow response, got {response.status_code}"
+
+
 class TestWorkflows:
     """Tests for complete end-to-end workflows"""
     
@@ -26,72 +52,48 @@ class TestWorkflows:
     def test_full_equivalency_workflow(self):
         """TC-INT-001: Complete workflow from course upload to equivalency export"""
         # Step 1: Get presigned URL for course inventory
-        presigned_response = requests.post(
-            f"{BASE_URL}/get-presigned-url",
-            headers={"x-access-token": ACCESS_TOKEN, "Content-Type": "application/json"},
-            json={
-                "file_name": "test-inventory.csv",
-                "institution_id": "227216",
-                "upload_type": "add"
-            }
+        presigned_response = make_post_request(
+            "/get-presigned-url",
+            json_data={"file_name": "test-inventory.csv", "institution_id": "227216", "upload_type": "add"}
         )
-        assert presigned_response.status_code in [200, 400, 401, 404, 429, 500, 502]
+        assert_workflow_response(presigned_response)
         
         # Step 2: Consume course inventory (simulated - file would need to exist in S3)
         if presigned_response.status_code == 200:
-            consume_response = requests.post(
-                f"{BASE_URL}/consume-course-inventory",
-                headers={"x-access-token": ACCESS_TOKEN, "Content-Type": "application/json"},
-                json={
-                    "file_name": "s3://bucket/test-inventory.csv",
-                    "upload_type": "add"
-                }
+            consume_response = make_post_request(
+                "/consume-course-inventory",
+                json_data={"file_name": "s3://bucket/test-inventory.csv", "upload_type": "add"}
             )
-            assert consume_response.status_code in [200, 401, 404, 429, 500, 502]
+            assert consume_response.status_code in [200, 401, 404, 500, 502]
         
         # Step 3: Export equivalencies
-        export_response = requests.post(
-            f"{BASE_URL}/equivalencies-export",
-            headers={"x-access-token": ACCESS_TOKEN, "Content-Type": "application/json"},
-            json={
-                "record_type": "BOTH",
-                "offset": 0,
-                "limit": 10
-            }
+        export_response = make_post_request(
+            "/equivalencies-export",
+            json_data={"record_type": "BOTH", "offset": 0, "limit": 10}
         )
-        assert export_response.status_code in [200, 400, 401, 404, 429, 500, 502]
+        assert_workflow_response(export_response)
     
     @pytest.mark.integration
     def test_suggestion_lifecycle(self):
         """TC-INT-005: Create suggestion, accept/reject, verify state"""
         # Step 1: Create/find suggestion
-        create_response = requests.post(
-            f"{BASE_URL}/suggestion-find-or-create",
-            headers={"x-access-token": ACCESS_TOKEN, "Content-Type": "application/json"},
-            json={
-                "course_number": "101",
-                "course_subject": "TEST",
-                "institution_id": "227216"
-            }
+        create_response = make_post_request(
+            "/suggestion-find-or-create",
+            json_data={"course_number": "101", "course_subject": "TEST", "institution_id": "227216"}
         )
-        assert create_response.status_code in [200, 400, 404, 429, 500, 502]
+        assert create_response.status_code in [200, 400, 401, 404, 500, 502]
         
         # Step 2: Make decision on suggestion (if created successfully)
         if create_response.status_code == 200:
             try:
                 suggestion_data = create_response.json()
                 if isinstance(suggestion_data, dict) and 'suggestion_id' in suggestion_data:
-                    decision_response = requests.post(
-                        f"{BASE_URL}/consume-suggestion-decision",
-                        headers={"x-access-token": ACCESS_TOKEN, "Content-Type": "application/json"},
-                        json={
-                            "suggestion_decision": "ACCEPT",
-                            "suggestion_id": str(suggestion_data['suggestion_id'])
-                        }
+                    decision_response = make_post_request(
+                        "/consume-suggestion-decision",
+                        json_data={"suggestion_decision": "ACCEPT", "suggestion_id": str(suggestion_data['suggestion_id'])}
                     )
-                    assert decision_response.status_code in [200, 400, 404, 429, 500, 502]
+                    assert decision_response.status_code in [200, 400, 401, 404, 500, 502]
             except (ValueError, KeyError):
-                # Response format different than expected
                 pass
 
 
@@ -106,18 +108,11 @@ class TestBulkOperations:
         
         for file_name in file_names:
             # Get presigned URL
-            presigned_response = requests.post(
-                f"{BASE_URL}/get-presigned-url",
-                headers={"x-access-token": ACCESS_TOKEN, "Content-Type": "application/json"},
-                json={
-                    "file_name": file_name,
-                    "institution_id": "227216",
-                    "upload_type": "add"
-                }
+            presigned_response = make_post_request(
+                "/get-presigned-url",
+                json_data={"file_name": file_name, "institution_id": "227216", "upload_type": "add"}
             )
-            assert presigned_response.status_code in [200, 400, 401, 404, 429, 500, 502]
-            
-            # Small delay to avoid rate limiting
+            assert_workflow_response(presigned_response)
             time.sleep(0.2)
     
     @pytest.mark.integration
@@ -127,16 +122,11 @@ class TestBulkOperations:
         file_names = [f"inventory-batch-{i}.csv" for i in range(1, 6)]
         
         for file_name in file_names:
-            presigned_response = requests.post(
-                f"{BASE_URL}/get-presigned-url",
-                headers={"x-access-token": ACCESS_TOKEN, "Content-Type": "application/json"},
-                json={
-                    "file_name": file_name,
-                    "institution_id": "227216",
-                    "upload_type": "add"
-                }
+            presigned_response = make_post_request(
+                "/get-presigned-url",
+                json_data={"file_name": file_name, "institution_id": "227216", "upload_type": "add"}
             )
-            assert presigned_response.status_code in [200, 400, 401, 404, 429, 500, 502]
+            assert_workflow_response(presigned_response)
             time.sleep(0.2)
 
 
@@ -147,55 +137,35 @@ class TestUploadTypes:
     def test_replace_vs_add_rules(self):
         """TC-INT-006: Verify replace overwrites, add appends"""
         # Test with 'add' upload_type
-        add_response = requests.post(
-            f"{BASE_URL}/get-presigned-url",
-            headers={"x-access-token": ACCESS_TOKEN, "Content-Type": "application/json"},
-            json={
-                "file_name": "rules-add-test.csv",
-                "institution_id": "227216",
-                "upload_type": "add"
-            }
+        add_response = make_post_request(
+            "/get-presigned-url",
+            json_data={"file_name": "rules-add-test.csv", "institution_id": "227216", "upload_type": "add"}
         )
-        assert add_response.status_code in [200, 400, 404, 429, 500, 502]
+        assert add_response.status_code in [200, 400, 401, 404, 500, 502]
         
         # Test with 'replace' upload_type
-        replace_response = requests.post(
-            f"{BASE_URL}/get-presigned-url",
-            headers={"x-access-token": ACCESS_TOKEN, "Content-Type": "application/json"},
-            json={
-                "file_name": "rules-replace-test.csv",
-                "institution_id": "227216",
-                "upload_type": "replace"
-            }
+        replace_response = make_post_request(
+            "/get-presigned-url",
+            json_data={"file_name": "rules-replace-test.csv", "institution_id": "227216", "upload_type": "replace"}
         )
-        assert replace_response.status_code in [200, 400, 404, 429, 500, 502]
+        assert replace_response.status_code in [200, 400, 401, 404, 500, 502]
     
     @pytest.mark.integration
     def test_replace_vs_add_inventory(self):
         """TC-INT-007: Verify replace overwrites, add appends for inventory"""
         # Test with 'add'
-        add_response = requests.post(
-            f"{BASE_URL}/get-presigned-url",
-            headers={"x-access-token": ACCESS_TOKEN, "Content-Type": "application/json"},
-            json={
-                "file_name": "inventory-add-test.csv",
-                "institution_id": "227216",
-                "upload_type": "add"
-            }
+        add_response = make_post_request(
+            "/get-presigned-url",
+            json_data={"file_name": "inventory-add-test.csv", "institution_id": "227216", "upload_type": "add"}
         )
-        assert add_response.status_code in [200, 400, 404, 429, 500, 502]
+        assert add_response.status_code in [200, 400, 401, 404, 500, 502]
         
         # Test with 'replace'
-        replace_response = requests.post(
-            f"{BASE_URL}/get-presigned-url",
-            headers={"x-access-token": ACCESS_TOKEN, "Content-Type": "application/json"},
-            json={
-                "file_name": "inventory-replace-test.csv",
-                "institution_id": "227216",
-                "upload_type": "replace"
-            }
+        replace_response = make_post_request(
+            "/get-presigned-url",
+            json_data={"file_name": "inventory-replace-test.csv", "institution_id": "227216", "upload_type": "replace"}
         )
-        assert replace_response.status_code in [200, 400, 404, 429, 500, 502]
+        assert replace_response.status_code in [200, 400, 401, 404, 500, 502]
 
 
 class TestDataIsolation:
@@ -207,9 +177,8 @@ class TestDataIsolation:
         institutions = ["227216", "182290", "100000"]
         
         for institution_id in institutions:
-            response = requests.get(
-                f"{BASE_URL}/publish-course-inventory",
-                headers={"x-access-token": ACCESS_TOKEN},
+            response = make_get_request(
+                "/publish-course-inventory",
                 params={"institution_id": institution_id}
             )
             
@@ -220,7 +189,6 @@ class TestDataIsolation:
             if response.status_code == 200:
                 try:
                     data = response.json()
-                    # Data should be institution-specific
                     assert isinstance(data, (dict, list))
                 except ValueError:
                     pass
@@ -233,28 +201,18 @@ class TestExportWorkflow:
     def test_export_after_upload(self):
         """TC-INT-009: Upload rules, immediately export equivalencies"""
         # Step 1: Get presigned URL for rules
-        presigned_response = requests.post(
-            f"{BASE_URL}/get-presigned-url",
-            headers={"x-access-token": ACCESS_TOKEN, "Content-Type": "application/json"},
-            json={
-                "file_name": "export-test-rules.csv",
-                "institution_id": "227216",
-                "upload_type": "add"
-            }
+        presigned_response = make_post_request(
+            "/get-presigned-url",
+            json_data={"file_name": "export-test-rules.csv", "institution_id": "227216", "upload_type": "add"}
         )
-        assert presigned_response.status_code in [200, 400, 401, 404, 429, 500, 502]
+        assert_workflow_response(presigned_response)
         
         # Step 2: Export equivalencies
-        export_response = requests.post(
-            f"{BASE_URL}/equivalencies-export",
-            headers={"x-access-token": ACCESS_TOKEN, "Content-Type": "application/json"},
-            json={
-                "record_type": "MODIFIED_RULES",
-                "offset": 0,
-                "limit": 10
-            }
+        export_response = make_post_request(
+            "/equivalencies-export",
+            json_data={"record_type": "MODIFIED_RULES", "offset": 0, "limit": 10}
         )
-        assert export_response.status_code in [200, 400, 401, 404, 429, 500, 502]
+        assert_workflow_response(export_response)
 
 
 class TestPaginationConsistency:
@@ -265,17 +223,12 @@ class TestPaginationConsistency:
         """TC-INT-010: Verify pagination returns all records exactly once"""
         all_course_ids = set()
         page = 1
-        max_pages = 5  # Limit to avoid excessive testing
+        max_pages = 5
         
         while page <= max_pages:
-            response = requests.get(
-                f"{BASE_URL}/publish-course-inventory",
-                headers={"x-access-token": ACCESS_TOKEN},
-                params={
-                    "institution_id": "227216",
-                    "page": page,
-                    "page_size": 10
-                }
+            response = make_get_request(
+                "/publish-course-inventory",
+                params={"institution_id": "227216", "page": page, "page_size": 10}
             )
             
             if response.status_code != 200:
@@ -285,14 +238,12 @@ class TestPaginationConsistency:
                 data = response.json()
                 if isinstance(data, dict) and 'rows' in data:
                     rows = data['rows']
-                    if not rows:  # No more data
+                    if not rows:
                         break
                     
-                    # Track course IDs to check for duplicates
                     for row in rows:
                         if isinstance(row, dict) and 'course_id' in row:
                             course_id = row['course_id']
-                            # Check for duplicates
                             assert course_id not in all_course_ids, f"Duplicate course_id: {course_id}"
                             all_course_ids.add(course_id)
                 else:
@@ -305,7 +256,6 @@ class TestPaginationConsistency:
     @pytest.mark.integration
     def test_filter_combinations(self):
         """TC-INT-011: Verify combining filters gives expected results"""
-        # Test various filter combinations
         filter_combinations = [
             {"institution_id": "227216", "CourseSubject": "MATH"},
             {"institution_id": "227216", "ActiveIndicator": "true"},
@@ -313,11 +263,7 @@ class TestPaginationConsistency:
         ]
         
         for filters in filter_combinations:
-            response = requests.get(
-                f"{BASE_URL}/publish-course-inventory",
-                headers={"x-access-token": ACCESS_TOKEN},
-                params=filters
-            )
+            response = make_get_request("/publish-course-inventory", params=filters)
             
             # Filters should work or return appropriate error
             assert response.status_code in [200, 400, 401, 404, 429, 500, 502]
@@ -340,42 +286,31 @@ class TestConcurrency:
         """TC-INT-004: Multiple institutions uploading simultaneously"""
         institutions = ["227216", "182290", "100000"]
         
-        # Simulate parallel uploads by making requests in quick succession
         responses = []
         for institution_id in institutions:
-            response = requests.post(
-                f"{BASE_URL}/get-presigned-url",
-                headers={"x-access-token": ACCESS_TOKEN, "Content-Type": "application/json"},
-                json={
-                    "file_name": f"parallel-test-{institution_id}.csv",
-                    "institution_id": institution_id,
-                    "upload_type": "add"
-                }
+            response = make_post_request(
+                "/get-presigned-url",
+                json_data={"file_name": f"parallel-test-{institution_id}.csv", "institution_id": institution_id, "upload_type": "add"}
             )
             responses.append(response)
         
         # All requests should succeed or fail gracefully
         for response in responses:
-            assert response.status_code in [200, 400, 401, 404, 429, 500, 502]
+            assert_workflow_response(response)
     
     @pytest.mark.integration
     def test_concurrent_decisions(self):
         """TC-INT-012: Multiple users making decisions simultaneously"""
         suggestion_ids = ["11111", "22222", "33333"]
         
-        # Make multiple decision requests quickly
         responses = []
         for suggestion_id in suggestion_ids:
-            response = requests.post(
-                f"{BASE_URL}/consume-suggestion-decision",
-                headers={"x-access-token": ACCESS_TOKEN, "Content-Type": "application/json"},
-                json={
-                    "suggestion_decision": "ACCEPT",
-                    "suggestion_id": suggestion_id
-                }
+            response = make_post_request(
+                "/consume-suggestion-decision",
+                json_data={"suggestion_decision": "ACCEPT", "suggestion_id": suggestion_id}
             )
             responses.append(response)
         
         # All should succeed or fail appropriately (no race conditions)
         for response in responses:
-            assert response.status_code in [200, 400, 401, 404, 429, 500, 502]
+            assert_workflow_response(response)
