@@ -52,7 +52,7 @@ jobs:
         ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         HYPOTHESIS_PROFILE: ci
       run: |
-        .\run_tests.ps1 -TestType all -HtmlReport --maxfail=20 
+        pytest -v --tb=short --maxfail=20 -x --html=pytest-report.html --self-contained-html 
     
     - name: Upload Test Results
       if: always()
