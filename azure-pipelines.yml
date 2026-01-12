@@ -74,21 +74,12 @@ stages:
       displayName: 'Install all dependencies'
     
     - script: |
-        pytest -v -m smoke --tb=short --junitxml=junit/smoke-test-results.xml
+        pytest -v --tb=short --maxfail=10 -x --junitxml=junit/test-results.xml
       env:
         BASE_URL: $(BASE_URL)
         ACCESS_TOKEN: $(ACCESS_TOKEN)
         HYPOTHESIS_PROFILE: $(HYPOTHESIS_PROFILE)
-      displayName: 'Run Smoke Tests'
-      continueOnError: true
-    
-    - script: |
-        pytest -v --tb=short --maxfail=10 --junitxml=junit/test-results.xml
-      env:
-        BASE_URL: $(BASE_URL)
-        ACCESS_TOKEN: $(ACCESS_TOKEN)
-        HYPOTHESIS_PROFILE: $(HYPOTHESIS_PROFILE)
-      displayName: 'Run All Tests'
+      displayName: 'Run Tests'
       continueOnError: true
     
     - task: PublishTestResults@2

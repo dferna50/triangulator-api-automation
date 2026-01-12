@@ -179,13 +179,13 @@ Action Required: Update ACCESS_TOKEN in pipeline settings
 # Validate token (cross-platform)
 python token_manager.py
 
-# Run tests locally
+# Run all tests locally
 pytest -v
 
-# Run smoke tests
-pytest -v -m smoke
+# Run specific marker (e.g., integration tests)
+pytest -v -m integration
 
-# Run with CI profile (faster)
+# Run with CI profile (faster - fewer test examples)
 $env:HYPOTHESIS_PROFILE = "ci"
 pytest -v
 ```

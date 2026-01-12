@@ -46,22 +46,13 @@ jobs:
           exit 1
         fi
     
-    - name: Run Smoke Tests
+    - name: Run Tests
       env:
         BASE_URL: ${{ secrets.BASE_URL }}
         ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         HYPOTHESIS_PROFILE: ci
       run: |
-        pytest -v -m smoke --tb=short
-    
-    - name: Run All Tests
-      if: success()
-      env:
-        BASE_URL: ${{ secrets.BASE_URL }}
-        ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-        HYPOTHESIS_PROFILE: ci
-      run: |
-        pytest -v --tb=short --maxfail=5
+        .\run_tests.ps1 -TestType all -HtmlReport --maxfail=20 
     
     - name: Upload Test Results
       if: always()

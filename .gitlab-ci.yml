@@ -28,8 +28,8 @@ validate_token:
   tags:
     - docker
 
-# Smoke tests - quick validation
-smoke_tests:
+# Full test suite
+full_tests:
   stage: test
   image: python:3.12
   needs: ["validate_token"]
@@ -38,33 +38,8 @@ smoke_tests:
     - pip install --upgrade pip
     - pip install -r requirements.txt
   script:
-    - echo "Running smoke tests..."
-    - pytest -v -m smoke --tb=short --junitxml=report-smoke.xml
-  artifacts:
-    when: always
-    reports:
-      junit: report-smoke.xml
-    paths:
-      - report-smoke.xml
-    expire_in: 30 days
-  only:
-    - branches
-    - merge_requests
-  tags:
-    - docker
-
-# Full test suite
-full_tests:
-  stage: test
-  image: python:3.12
-  needs: ["smoke_tests"]
-  before_script:
-    - python --version
-    - pip install --upgrade pip
-    - pip install -r requirements.txt
-  script:
-    - echo "Running full test suite..."
-    - pytest -v --tb=short --maxfail=10 --junitxml=report-full.xml
+    - echo "Running test suite..."
+    - pytest -v --tb=short --maxfail=10 -x --junitxml=report-full.xml
   artifacts:
     when: always
     reports:
