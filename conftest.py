@@ -16,6 +16,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Token validation on startup
+_token_validated = False
+
 # ========== HYPOTHESIS PROFILES ==========
 # These control how many test examples Hypothesis generates
 
@@ -79,6 +82,47 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "smoke: Quick smoke tests")
     config.addinivalue_line("markers", "regression: Regression tests")
     config.addinivalue_line("markers", "csv_upload: CSV upload workflow tests")
+
+
+def pytest_sessionstart(session):
+    """Validate access token before running any tests"""
+    global _token_validated
+    
+    if _token_validated:
+        return
+    
+    # Only validate if both env vars are set
+    base_url = os.getenv("BASE_URL")
+    token = os.getenv("ACCESS_TOKEN")
+    
+    if not base_url or not token:
+        return  # Will be caught by fixtures
+    
+    # Perform token validation
+    try:
+        from token_manager import TokenManager
+        logger.info("Validating access token before test execution...")
+        
+        manager = TokenManager(base_url, token)
+        is_valid, message = manager.validate_token()
+        
+        if is_valid:
+            logger.info(f"✅ Token validation successful: {message}")
+            _token_validated = True
+        else:
+            logger.error(f"❌ Token validation failed: {message}")
+            logger.error("=" * 70)
+            logger.error("CRITICAL: Access token is expired or invalid!")
+            logger.error("Action required:")
+            logger.error("1. Generate a new access token from your API provider")
+            logger.error("2. Update ACCESS_TOKEN environment variable")
+            logger.error("3. For CI/CD: Update the secret in your pipeline settings")
+            logger.error("=" * 70)
+            pytest.exit("Access token validation failed - tests cannot proceed", returncode=1)
+    except ImportError:
+        logger.warning("token_manager module not found - skipping token validation")
+    except Exception as e:
+        logger.warning(f"Token validation encountered an error: {e}")
 
 
 # ========== FIXTURES ==========
