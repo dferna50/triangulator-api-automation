@@ -96,7 +96,7 @@ class TestTimeoutHandling:
             # If we get a response, it should be valid
             assert_valid_status(response)
         except Timeout:
-            pytest.skip("Request timed out (expected behavior for slow endpoint)")
+            # pytest.skip("Request timed out (expected behavior for slow endpoint)")
 
 
 class TestConnectionHandling:

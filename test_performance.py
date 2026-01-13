@@ -203,7 +203,7 @@ class TestSustainedLoad:
     
     @pytest.mark.performance
     @pytest.mark.slow
-    @pytest.mark.skip(reason="Performance test too slow for regular CI/CD - requires dedicated performance testing environment")
+    # @pytest.mark.skip(reason="Performance test too slow for regular CI/CD - requires dedicated performance testing environment")
     def test_sustained_load(self):
         """TC-PERF-005: Verify API handles sustained load (100 req/min for 10 minutes)"""
         duration_minutes = 2
