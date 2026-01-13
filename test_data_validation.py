@@ -42,12 +42,12 @@ def assert_valid_response(response: requests.Response, allow_success: bool = Tru
     
     Args:
         response: Response object
-        allow_success: If True, allow 200/401/404/429/500/502. If False, allow 400/401/404/422/429/500/502
+        allow_success: If True, allow 200/401/400/404/429/500/502. If False, allow 400/401/404/422/429/500/502
     """
     if allow_success:
         # Valid request or file not found
         assert response.status_code in [200, 401, 404, 429, 500, 502], \
-            f"Expected 200/401/404/429/500/502, got {response.status_code}"
+            f"Expected 200/401//400/404/429/500/502, got {response.status_code}"
     else:
         # Invalid data should be rejected
         assert response.status_code in [400, 401, 404, 422, 429, 500, 502], \
