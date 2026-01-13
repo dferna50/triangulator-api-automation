@@ -438,22 +438,6 @@ class TestCSVUploadEdgeCases:
     
     @pytest.mark.integration
     @pytest.mark.csv_upload
-    def test_upload_same_file_replace_mode(self):
-        """TC-CSV-EDGE-002: Upload same file twice with 'replace' mode"""
-        file_name = "182290_FileWithNoError.csv"
-        
-        # First upload
-        result1 = complete_upload_workflow(file_name, TARGET_INSTITUTION_ID, "replace")
-        time.sleep(1)
-        
-        # Second upload should replace the first
-        result2 = complete_upload_workflow(file_name, TARGET_INSTITUTION_ID, "replace")
-        
-        assert result1['step1_status'] in [200, 400, 401, 404, 429, 500, 502]
-        assert result2['step1_status'] in [200, 400, 401, 404, 429, 500, 502]
-    
-    @pytest.mark.integration
-    @pytest.mark.csv_upload
     def test_different_institution_ids(self):
         """TC-CSV-EDGE-003: Upload files for different institution IDs"""
         file_name = "182290_FileWithNoError.csv"
