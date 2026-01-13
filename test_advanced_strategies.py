@@ -450,7 +450,7 @@ class TestConsumeRulesProperties:
             }
         )
         # Accept 404 as valid response (file not found is acceptable for invalid paths)
-        assert response.status_code in [400, 404, 422, 429, 500, 502]
+        assert response.status_code in [400, 404, 422, 429, 500, 502] # need to consider disabling the timer for this test, its flakey
 
 
 class TestSuggestionDecisionProperties:

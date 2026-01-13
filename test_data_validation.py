@@ -157,7 +157,7 @@ class TestDataRangeValidation:
             params={"institution_id": "227216", "page_size": 10000}
         )
         # Should reject or limit excessive page_size
-        assert response.status_code in [200, 400, 401, 404, 422, 500, 502]
+        assert response.status_code in [200, 400, 401, 404, 422, 500, 502]  #test is not required as the page size filed is not valid for this API
 
 
 class TestRequiredFieldValidation:
@@ -179,7 +179,7 @@ class TestDateFormatValidation:
     """Tests for date format validation"""
     
     @pytest.mark.data_validation
-    @pytest.mark.skip(reason="Date format validation inconsistent with API behavior - needs investigation")
+    # @pytest.mark.skip(reason="Date format validation inconsistent with API behavior - needs investigation")
     def test_date_format_validation(self):
         """TC-DATA-011: Verify date fields accept ISO 8601 format"""
         valid_dates = ["2024-01", "2024-12"]

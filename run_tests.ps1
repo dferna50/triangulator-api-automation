@@ -85,7 +85,7 @@ switch ($TestType) {
     }
     "schema" {
         Write-Host "Running schema compliance tests..." -ForegroundColor $InfoColor
-        $pytestArgs += "test_schemathesis_comprehensive.py::test_api_schema_compliance"
+        $pytestArgs += "test_schemathesis_comprehensive.py::test_api_schema_compliance" # consider removing the test_api_schema_compliance test
     }
     "security" {
         Write-Host "Running security tests..." -ForegroundColor $InfoColor
