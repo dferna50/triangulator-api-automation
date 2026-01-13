@@ -1,0 +1,21 @@
+{
+  "name": "triangulator-api-automation",
+  "version": "1.0.0",
+  "description": "API automation test suite with Slack reporting",
+  "main": "sendReport.js",
+  "scripts": {
+    "send-report": "node sendReport.js"
+  },
+  "keywords": [
+    "api",
+    "testing",
+    "automation",
+    "pytest",
+    "slack"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
