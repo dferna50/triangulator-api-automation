@@ -24,6 +24,10 @@ if (!fs.existsSync(reportPath)) {
 
 const reportData = JSON.parse(fs.readFileSync(reportPath, 'utf-8'));
 
+// Check for HTML report (optional attachment)
+const htmlReportPath = path.join(__dirname, 'pytest-report.html');
+const htmlReportExists = fs.existsSync(htmlReportPath);
+
 // Extract test statistics
 const summary = reportData.summary || {};
 const passed = summary.passed || 0;
@@ -149,7 +153,8 @@ Test Summary:
 Repository: ${repoName}
 Run ID: ${runId}
 
-${runUrl ? `View Full Report: ${runUrl}` : ''}
+${htmlReportExists ? '📎 Detailed HTML Report attached - download and open in browser\n' : ''}
+${runUrl ? `View on GitHub Actions: ${runUrl}` : ''}
 `;
 
 // Configure email transporter with Gmail
@@ -161,13 +166,20 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// Email options
+// Email options with HTML report attachment
 const mailOptions = {
   from: `"API Test Reporter" <${process.env.GMAIL_USER}>`,
   to: process.env.SLACK_EMAIL,
   subject: `${statusEmoji} API Tests ${testStatus} - ${branch} - ${passed}/${total} passed`,
   text: textBody,
-  html: htmlBody
+  html: htmlBody,
+  attachments: htmlReportExists ? [
+    {
+      filename: `pytest-report-${branch}-${runId}.html`,
+      path: htmlReportPath,
+      contentType: 'text/html'
+    }
+  ] : []
 };
 
 // Send email to Slack channel
