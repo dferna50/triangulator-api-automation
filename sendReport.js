@@ -119,15 +119,6 @@ const htmlBody = `
   </div>
   ` : ''}
 
-  ${runUrl ? `
-  <div style="margin-top: 20px; text-align: center;">
-    <a href="${runUrl}" 
-       style="display: inline-block; padding: 12px 24px; background-color: ${failed > 0 ? '#d32f2f' : '#1976d2'}; 
-              color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
-    </a>
-  </div>
-  ` : ''}
-
   <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #757575; font-size: 12px;">
     <p>This is an automated message from the API Automation Test Suite.</p>
   </div>
@@ -152,7 +143,7 @@ Test Summary:
 Repository: ${repoName}
 Run ID: ${runId}
 
-${htmlReportExists ? '📎 Detailed HTML Report attached - download and open in browser\n' : ''}
+${htmlReportExists ? '📎 Detailed HTML Report attached - download and open in browser' : ''}
 `;
 
 // Configure email transporter with Gmail
