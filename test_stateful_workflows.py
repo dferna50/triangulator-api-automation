@@ -99,7 +99,7 @@ class EquivalencyWorkflowStateMachine(RuleBasedStateMachine):
 
 
 @pytest.mark.stateful
-@pytest.mark.skip(reason="Stateful test requires specific test data state - fails in some environments")
+# @pytest.mark.skip(reason="Stateful test requires specific test data state - fails in some environments")
 def test_equivalency_workflow_stateful():
     """TC-INT-STATEFUL-001: Test equivalency workflow with stateful machine"""
     EquivalencyWorkflowStateMachine.TestCase.settings = settings(
