@@ -124,7 +124,6 @@ const htmlBody = `
     <a href="${runUrl}" 
        style="display: inline-block; padding: 12px 24px; background-color: ${failed > 0 ? '#d32f2f' : '#1976d2'}; 
               color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
-      🔗 View on GitHub Actions
     </a>
   </div>
   ` : ''}
@@ -154,7 +153,6 @@ Repository: ${repoName}
 Run ID: ${runId}
 
 ${htmlReportExists ? '📎 Detailed HTML Report attached - download and open in browser\n' : ''}
-${runUrl ? `View on GitHub Actions: ${runUrl}` : ''}
 `;
 
 // Configure email transporter with Gmail
