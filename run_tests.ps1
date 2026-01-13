@@ -16,7 +16,7 @@ param(
     [switch]$HtmlReport,
     
     [Parameter(Mandatory=$false)]
-    [int]$Workers = 5,
+    [int]$Workers = 4,
     
     [Parameter(Mandatory=$false)]
     [ValidateSet("ci", "fast", "default", "thorough", "exhaustive")]
