@@ -106,12 +106,21 @@ const htmlBody = `
     </p>
   </div>
 
+  ${htmlReportExists ? `
+  <div style="margin-top: 20px; padding: 15px; background-color: #fff3cd; border-left: 4px solid #ffc107;">
+    <p style="margin: 0; color: #856404;">
+      📎 <strong>Detailed HTML Report Attached</strong><br>
+      <span style="font-size: 14px;">Download and open the attached file in your browser for full test details.</span>
+    </p>
+  </div>
+  ` : ''}
+
   ${runUrl ? `
   <div style="margin-top: 20px; text-align: center;">
     <a href="${runUrl}" 
        style="display: inline-block; padding: 12px 24px; background-color: ${failed > 0 ? '#d32f2f' : '#1976d2'}; 
               color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
-      🔗 View Full Report on GitHub Actions
+      🔗 View on GitHub Actions
     </a>
   </div>
   ` : ''}
@@ -169,6 +178,9 @@ transporter.sendMail(mailOptions, (error, info) => {
   } else {
     console.log('✅ Slack notification sent successfully via email!');
     console.log(`Test Results: ${passed} passed, ${failed} failed, ${skipped} skipped`);
+    if (htmlReportExists) {
+      console.log(`📎 HTML report attached: pytest-report-${branch}-${runId}.html`);
+    }
     console.log(`Message ID: ${info.messageId}`);
   }
 });

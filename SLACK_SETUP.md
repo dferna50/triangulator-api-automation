@@ -107,8 +107,13 @@ Total Tests: 219        ✅ Passed: 219
 Repository: dferna50/triangulator-api-automation
 Run ID: 12345678
 
-[🔗 View Full Report]
+📎 Detailed HTML Report Attached
+Download and open the attached file in your browser for full test details.
+
+[🔗 View on GitHub Actions]
 ```
+
+**Note**: The email includes a **pytest HTML report attachment** (`pytest-report-{branch}-{run_id}.html`) that you can download and open directly in your browser to see detailed test results, screenshots, logs, and failure details.
 
 ## Security Best Practices ✅
 
@@ -169,6 +174,18 @@ Run ID: 12345678
 3. **Ask Slack admin** to check if email integration is globally disabled
 4. **Try a different channel** - some channels may have restrictions
 
+## What's Included in the Notification
+
+Each Slack notification includes:
+
+1. **Summary Table** - Test status, branch, duration, and trigger info
+2. **Test Statistics** - Total, passed, failed, and skipped counts
+3. **HTML Report Attachment** - Full pytest HTML report with detailed results
+   - Download the attachment from Slack
+   - Open it in any web browser
+   - See all test details, logs, and failure information
+4. **GitHub Actions Link** - Button to view the workflow run
+
 ## Customizing Notifications
 
 To customize the email format, edit `sendReport.js`:
@@ -176,6 +193,7 @@ To customize the email format, edit `sendReport.js`:
 - **Change colors**: Modify the HTML styles in `htmlBody`
 - **Add fields**: Add new rows to the HTML tables
 - **Change subject**: Modify the `subject` field in `mailOptions`
+- **Remove attachment**: Set `htmlReportExists` to `false` or delete the attachment section
 - **Send to multiple channels**: Add multiple email addresses (comma-separated) to `SLACK_EMAIL` secret
 
 ## Alternative: Using a Different Email Provider
