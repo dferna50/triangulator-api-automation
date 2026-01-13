@@ -1,11 +1,17 @@
 const fs = require('fs');
 const path = require('path');
-const https = require('https');
+const nodemailer = require('nodemailer');
 
-// Validate required environment variables
-if (!process.env.SLACK_WEBHOOK_URL) {
-  console.error('Error: Missing SLACK_WEBHOOK_URL environment variable');
-  console.error('Please set SLACK_WEBHOOK_URL in your GitHub secrets');
+// Validate required environment variables for email-based Slack integration
+if (!process.env.SLACK_EMAIL) {
+  console.error('Error: Missing SLACK_EMAIL environment variable');
+  console.error('Please set SLACK_EMAIL (your Slack channel email) in your GitHub secrets');
+  process.exit(1);
+}
+
+if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+  console.error('Error: Missing email authentication credentials');
+  console.error('Please set GMAIL_USER and GMAIL_APP_PASSWORD in your GitHub secrets');
   process.exit(1);
 }
 
@@ -45,136 +51,124 @@ const runUrl = process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY &&
 const branch = process.env.GITHUB_REF_NAME || 'unknown';
 const actor = process.env.GITHUB_ACTOR || 'unknown';
 
-// Build Slack message with rich formatting
-const slackMessage = {
-  text: `${statusEmoji} API Test Report: ${testStatus}`,
-  blocks: [
-    {
-      type: 'header',
-      text: {
-        type: 'plain_text',
-        text: `${statusEmoji} API Automation Test Results`,
-        emoji: true
-      }
-    },
-    {
-      type: 'section',
-      fields: [
-        {
-          type: 'mrkdwn',
-          text: `*Status:*\n${testStatus}`
-        },
-        {
-          type: 'mrkdwn',
-          text: `*Branch:*\n${branch}`
-        },
-        {
-          type: 'mrkdwn',
-          text: `*Duration:*\n${formattedDuration}`
-        },
-        {
-          type: 'mrkdwn',
-          text: `*Triggered by:*\n${actor}`
-        }
-      ]
-    },
-    {
-      type: 'section',
-      fields: [
-        {
-          type: 'mrkdwn',
-          text: `*Total Tests:*\n${total}`
-        },
-        {
-          type: 'mrkdwn',
-          text: `*✅ Passed:*\n${passed}`
-        },
-        {
-          type: 'mrkdwn',
-          text: `*❌ Failed:*\n${failed}`
-        },
-        {
-          type: 'mrkdwn',
-          text: `*⏭️ Skipped:*\n${skipped}`
-        }
-      ]
-    }
-  ],
-  attachments: [
-    {
-      color: statusColor,
-      fields: [
-        {
-          title: 'Repository',
-          value: repoName,
-          short: true
-        },
-        {
-          title: 'Run ID',
-          value: runId,
-          short: true
-        }
-      ]
-    }
-  ]
-};
+// Build HTML email message for Slack
+const htmlBody = `
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+  <h2 style="color: ${failed > 0 ? '#d32f2f' : '#2e7d32'};">
+    ${statusEmoji} API Automation Test Results
+  </h2>
+  
+  <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+    <tr style="background-color: #f5f5f5;">
+      <td style="padding: 12px; border: 1px solid #ddd;"><strong>Status</strong></td>
+      <td style="padding: 12px; border: 1px solid #ddd; color: ${failed > 0 ? '#d32f2f' : '#2e7d32'}; font-weight: bold;">
+        ${testStatus}
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 12px; border: 1px solid #ddd;"><strong>Branch</strong></td>
+      <td style="padding: 12px; border: 1px solid #ddd;">${branch}</td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+      <td style="padding: 12px; border: 1px solid #ddd;"><strong>Duration</strong></td>
+      <td style="padding: 12px; border: 1px solid #ddd;">${formattedDuration}</td>
+    </tr>
+    <tr>
+      <td style="padding: 12px; border: 1px solid #ddd;"><strong>Triggered by</strong></td>
+      <td style="padding: 12px; border: 1px solid #ddd;">${actor}</td>
+    </tr>
+  </table>
 
-// Add link to GitHub Actions run if available
-if (runUrl) {
-  slackMessage.blocks.push({
-    type: 'actions',
-    elements: [
-      {
-        type: 'button',
-        text: {
-          type: 'plain_text',
-          text: '🔗 View Full Report',
-          emoji: true
-        },
-        url: runUrl,
-        style: failed > 0 ? 'danger' : 'primary'
-      }
-    ]
-  });
-}
+  <h3 style="color: #424242; margin-top: 30px;">Test Summary</h3>
+  <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+    <tr style="background-color: #f5f5f5;">
+      <td style="padding: 12px; border: 1px solid #ddd;"><strong>Total Tests</strong></td>
+      <td style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold;">${total}</td>
+    </tr>
+    <tr>
+      <td style="padding: 12px; border: 1px solid #ddd;">✅ <strong>Passed</strong></td>
+      <td style="padding: 12px; border: 1px solid #ddd; text-align: center; color: #2e7d32; font-weight: bold;">${passed}</td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+      <td style="padding: 12px; border: 1px solid #ddd;">❌ <strong>Failed</strong></td>
+      <td style="padding: 12px; border: 1px solid #ddd; text-align: center; color: #d32f2f; font-weight: bold;">${failed}</td>
+    </tr>
+    <tr>
+      <td style="padding: 12px; border: 1px solid #ddd;">⏭️ <strong>Skipped</strong></td>
+      <td style="padding: 12px; border: 1px solid #ddd; text-align: center; color: #757575; font-weight: bold;">${skipped}</td>
+    </tr>
+  </table>
 
-// Send to Slack using webhook
-const webhookUrl = new URL(process.env.SLACK_WEBHOOK_URL);
-const postData = JSON.stringify(slackMessage);
+  <div style="margin-top: 30px; padding: 15px; background-color: #e3f2fd; border-left: 4px solid #1976d2;">
+    <p style="margin: 0; color: #424242;">
+      <strong>Repository:</strong> ${repoName}<br>
+      <strong>Run ID:</strong> ${runId}
+    </p>
+  </div>
 
-const options = {
-  hostname: webhookUrl.hostname,
-  path: webhookUrl.pathname,
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Content-Length': Buffer.byteLength(postData)
+  ${runUrl ? `
+  <div style="margin-top: 20px; text-align: center;">
+    <a href="${runUrl}" 
+       style="display: inline-block; padding: 12px 24px; background-color: ${failed > 0 ? '#d32f2f' : '#1976d2'}; 
+              color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
+      🔗 View Full Report on GitHub Actions
+    </a>
+  </div>
+  ` : ''}
+
+  <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #757575; font-size: 12px;">
+    <p>This is an automated message from the API Automation Test Suite.</p>
+  </div>
+</div>
+`;
+
+// Plain text version for email clients that don't support HTML
+const textBody = `
+${statusEmoji} API Automation Test Results
+
+Status: ${testStatus}
+Branch: ${branch}
+Duration: ${formattedDuration}
+Triggered by: ${actor}
+
+Test Summary:
+- Total Tests: ${total}
+- ✅ Passed: ${passed}
+- ❌ Failed: ${failed}
+- ⏭️ Skipped: ${skipped}
+
+Repository: ${repoName}
+Run ID: ${runId}
+
+${runUrl ? `View Full Report: ${runUrl}` : ''}
+`;
+
+// Configure email transporter with Gmail
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD
   }
+});
+
+// Email options
+const mailOptions = {
+  from: `"API Test Reporter" <${process.env.GMAIL_USER}>`,
+  to: process.env.SLACK_EMAIL,
+  subject: `${statusEmoji} API Tests ${testStatus} - ${branch} - ${passed}/${total} passed`,
+  text: textBody,
+  html: htmlBody
 };
 
-const req = https.request(options, (res) => {
-  let data = '';
-  
-  res.on('data', (chunk) => {
-    data += chunk;
-  });
-  
-  res.on('end', () => {
-    if (res.statusCode === 200) {
-      console.log('✅ Slack notification sent successfully!');
-      console.log(`Test Results: ${passed} passed, ${failed} failed, ${skipped} skipped`);
-    } else {
-      console.error(`❌ Failed to send Slack notification. Status: ${res.statusCode}`);
-      console.error(`Response: ${data}`);
-      process.exit(1);
-    }
-  });
+// Send email to Slack channel
+transporter.sendMail(mailOptions, (error, info) => {
+  if (error) {
+    console.error('❌ Error sending Slack notification via email:', error.message);
+    process.exit(1);
+  } else {
+    console.log('✅ Slack notification sent successfully via email!');
+    console.log(`Test Results: ${passed} passed, ${failed} failed, ${skipped} skipped`);
+    console.log(`Message ID: ${info.messageId}`);
+  }
 });
-
-req.on('error', (error) => {
-  console.error('❌ Error sending Slack notification:', error.message);
-  process.exit(1);
-});
-
-req.write(postData);
-req.end();

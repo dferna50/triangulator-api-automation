@@ -1,7 +1,7 @@
 {
   "name": "triangulator-api-automation",
   "version": "1.0.0",
-  "description": "API automation test suite with Slack reporting",
+  "description": "API automation test suite with Slack email reporting",
   "main": "sendReport.js",
   "scripts": {
     "send-report": "node sendReport.js"
@@ -11,11 +11,15 @@
     "testing",
     "automation",
     "pytest",
-    "slack"
+    "slack",
+    "email"
   ],
   "author": "",
   "license": "MIT",
   "engines": {
     "node": ">=16.0.0"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.0"
   }
 }
