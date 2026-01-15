@@ -174,7 +174,10 @@ class TestHealthCheck:
             "/health/live",
             "/health/ready",
             "/_health",
-            "/api/health"
+            "/api/health",
+            "/status",
+            "/api/status",
+            "/health/live"
         ]
         
         health_check_found = False
