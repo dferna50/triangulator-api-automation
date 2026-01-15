@@ -1,10 +1,10 @@
 name: API Automation Tests
 
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
+  # push:
+  #   branches: [ main, develop ]
+  # pull_request:
+  #   branches: [ main, develop ] //disalbed for testing
   schedule:
     # Run daily at 2 AM UTC to catch token expiration issues early
     - cron: '0 5 * * *'
@@ -61,30 +61,30 @@ jobs:
           .pytest_cache/
         retention-days: 30
     
-    - name: Setup Node.js for Slack Reporting
-      if: always()
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
+    # - name: Setup Node.js for Slack Reporting
+    #   if: always()
+    #   uses: actions/setup-node@v4
+    #   with:
+    #     node-version: '18'
     
-    - name: Install Node.js dependencies
-      if: always()
-      run: |
-        npm install
+    # - name: Install Node.js dependencies
+    #   if: always()
+    #   run: |
+    #     npm install
     
-    - name: Send Slack Notification via Email
-      if: always()
-      env:
-        SLACK_EMAIL: ${{ secrets.SLACK_EMAIL }}
-        GMAIL_USER: ${{ secrets.GMAIL_USER }}
-        GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-        GITHUB_REPOSITORY: ${{ github.repository }}
-        GITHUB_RUN_ID: ${{ github.run_id }}
-        GITHUB_SERVER_URL: ${{ github.server_url }}
-        GITHUB_REF_NAME: ${{ github.ref_name }}
-        GITHUB_ACTOR: ${{ github.actor }}
-      run: |
-        node sendReport.js
+    # - name: Send Slack Notification via Email
+    #   if: always()
+    #   env:
+    #     SLACK_EMAIL: ${{ secrets.SLACK_EMAIL }}
+    #     GMAIL_USER: ${{ secrets.GMAIL_USER }}
+    #     GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+    #     GITHUB_REPOSITORY: ${{ github.repository }}
+    #     GITHUB_RUN_ID: ${{ github.run_id }}
+    #     GITHUB_SERVER_URL: ${{ github.server_url }}
+    #     GITHUB_REF_NAME: ${{ github.ref_name }}
+    #     GITHUB_ACTOR: ${{ github.actor }}
+    #   run: |
+    #     node sendReport.js  # disabled for testing
     
     - name: Notify on Token Expiration
       if: failure()
