@@ -72,19 +72,19 @@ jobs:
       run: |
         npm install
     
-    # - name: Send Slack Notification via Email
-    #   if: always()
-    #   env:
-    #     SLACK_EMAIL: ${{ secrets.SLACK_EMAIL }}
-    #     GMAIL_USER: ${{ secrets.GMAIL_USER }}
-    #     GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-    #     GITHUB_REPOSITORY: ${{ github.repository }}
-    #     GITHUB_RUN_ID: ${{ github.run_id }}
-    #     GITHUB_SERVER_URL: ${{ github.server_url }}
-    #     GITHUB_REF_NAME: ${{ github.ref_name }}
-    #     GITHUB_ACTOR: ${{ github.actor }}
-    #   run: |
-    #     node sendReport.js  # disabled for testing
+    - name: Send Slack Notification via Email
+      if: always()
+      env:
+        SLACK_EMAIL: ${{ secrets.SLACK_EMAIL }}
+        GMAIL_USER: ${{ secrets.GMAIL_USER }}
+        GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        GITHUB_RUN_ID: ${{ github.run_id }}
+        GITHUB_SERVER_URL: ${{ github.server_url }}
+        GITHUB_REF_NAME: ${{ github.ref_name }}
+        GITHUB_ACTOR: ${{ github.actor }}
+      run: |
+        node sendReport.js  # disabled for testing
     
     - name: Notify on Token Expiration
       if: failure()
