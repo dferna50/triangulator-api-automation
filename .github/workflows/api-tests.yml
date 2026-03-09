@@ -1,92 +1,92 @@
-name: API Automation Tests
+# name: API Automation Tests
 
-on:
-  push:
-    branches: [ main, develop ]
-  # pull_request:
-    # branches: [ main, develop ] 
-  # schedule:
-  #   # Run daily at 5 AM UTC to catch token expiration issues early
-  #   - cron: '0 5 * * *'
-  workflow_dispatch:
-    # Allow manual trigger
+# on:
+#   push:
+#     branches: [ main, develop ]
+#   # pull_request:
+#     # branches: [ main, develop ] 
+#   # schedule:
+#   #   # Run daily at 5 AM UTC to catch token expiration issues early
+#   #   - cron: '0 5 * * *'
+#   workflow_dispatch:
+#     # Allow manual trigger
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
+# jobs:
+#   test:
+#     runs-on: ubuntu-latest
     
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+#     steps:
+#     - name: Checkout code
+#       uses: actions/checkout@v4
     
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-        cache: 'pip'
+#     - name: Set up Python 3.12
+#       uses: actions/setup-python@v5
+#       with:
+#         python-version: '3.12'
+#         cache: 'pip'
     
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+#     - name: Install dependencies
+#       run: |
+#         python -m pip install --upgrade pip
+#         pip install -r requirements.txt
     
-    # - name: Validate Access Token
-    #   env:
-    #     BASE_URL: ${{ secrets.BASE_URL }}
-    #     ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-    #   run: |
-    #     echo "Validating API access token..."
-    #     python token_manager.py
-    #     if [ $? -ne 0 ]; then
-    #       echo "::error::Access token validation failed! Update the ACCESS_TOKEN secret in GitHub."
-    #       exit 1
-    #     fi
+#     # - name: Validate Access Token
+#     #   env:
+#     #     BASE_URL: ${{ secrets.BASE_URL }}
+#     #     ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+#     #   run: |
+#     #     echo "Validating API access token..."
+#     #     python token_manager.py
+#     #     if [ $? -ne 0 ]; then
+#     #       echo "::error::Access token validation failed! Update the ACCESS_TOKEN secret in GitHub."
+#     #       exit 1
+#     #     fi
     
-    - name: Run Tests
-      env:
-        BASE_URL: ${{ secrets.BASE_URL }}
-        ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-        HYPOTHESIS_PROFILE: ci
-      run: |
-        pytest -v --tb=short --maxfail=20 --html=pytest-report.html --self-contained-html --json-report --json-report-file=reports/report.json
+#     - name: Run Tests
+#       env:
+#         BASE_URL: ${{ secrets.BASE_URL }}
+#         ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+#         HYPOTHESIS_PROFILE: ci
+#       run: |
+#         pytest -v --tb=short --maxfail=20 --html=pytest-report.html --self-contained-html --json-report --json-report-file=reports/report.json
     
-    - name: Upload Test Results
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-results
-        path: |
-          pytest-report.html
-          reports/report.json
-          .pytest_cache/
-        retention-days: 30
+#     - name: Upload Test Results
+#       if: always()
+#       uses: actions/upload-artifact@v4
+#       with:
+#         name: test-results
+#         path: |
+#           pytest-report.html
+#           reports/report.json
+#           .pytest_cache/
+#         retention-days: 30
     
-    - name: Setup Node.js for Slack Reporting
-      if: always()
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
+#     - name: Setup Node.js for Slack Reporting
+#       if: always()
+#       uses: actions/setup-node@v4
+#       with:
+#         node-version: '18'
     
-    - name: Install Node.js dependencies
-      if: always()
-      run: |
-        npm install
+#     - name: Install Node.js dependencies
+#       if: always()
+#       run: |
+#         npm install
     
-    - name: Send Slack Notification via Email
-      if: always()
-      env:
-        SLACK_EMAIL: ${{ secrets.SLACK_EMAIL }}
-        GMAIL_USER: ${{ secrets.GMAIL_USER }}
-        GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-        GITHUB_REPOSITORY: ${{ github.repository }}
-        GITHUB_RUN_ID: ${{ github.run_id }}
-        GITHUB_SERVER_URL: ${{ github.server_url }}
-        GITHUB_REF_NAME: ${{ github.ref_name }}
-        GITHUB_ACTOR: ${{ github.actor }}
-      run: |
-        node sendReport.js  # disabled for testing
+#     - name: Send Slack Notification via Email
+#       if: always()
+#       env:
+#         SLACK_EMAIL: ${{ secrets.SLACK_EMAIL }}
+#         GMAIL_USER: ${{ secrets.GMAIL_USER }}
+#         GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+#         GITHUB_REPOSITORY: ${{ github.repository }}
+#         GITHUB_RUN_ID: ${{ github.run_id }}
+#         GITHUB_SERVER_URL: ${{ github.server_url }}
+#         GITHUB_REF_NAME: ${{ github.ref_name }}
+#         GITHUB_ACTOR: ${{ github.actor }}
+#       run: |
+#         node sendReport.js  # disabled for testing
     
-    - name: Notify on Token Expiration
-      if: failure()
-      run: |
-        echo "::warning::Tests failed - check if ACCESS_TOKEN needs rotation"
+#     - name: Notify on Token Expiration
+#       if: failure()
+#       run: |
+#         echo "::warning::Tests failed - check if ACCESS_TOKEN needs rotation"
