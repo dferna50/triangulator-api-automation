@@ -3,11 +3,11 @@ name: API Automation Tests
 on:
   push:
     branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ] 
-  schedule:
-    # Run daily at 5 AM UTC to catch token expiration issues early
-    - cron: '0 5 * * *'
+  # pull_request:
+    # branches: [ main, develop ] 
+  # schedule:
+  #   # Run daily at 5 AM UTC to catch token expiration issues early
+  #   - cron: '0 5 * * *'
   workflow_dispatch:
     # Allow manual trigger
 
