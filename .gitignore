@@ -3,6 +3,12 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+AGENTS.md
+AI_AGENT_GUIDE.md
+CLAUDE.md
+parse_report.py
+scratch_test_requests.py
+
 # C extensions
 *.so
 

@@ -98,10 +98,6 @@ class EquivalencyWorkflowStateMachine(RuleBasedStateMachine):
         assert self.workflow_step in valid_states, f"Invalid workflow state: {self.workflow_step}"
 
 
-# DELETED: test_equivalency_workflow_stateful - AttributeError: no attribute 'runTest'
-# This test was using an incorrect API for hypothesis RuleBasedStateMachine
-
-
 class CourseInventoryWorkflowStateMachine(RuleBasedStateMachine):
     """Stateful test for course inventory workflow"""
     
@@ -152,7 +148,3 @@ class CourseInventoryWorkflowStateMachine(RuleBasedStateMachine):
         """Invariant: last response status should be valid HTTP code"""
         if self.last_response_status is not None:
             assert 100 <= self.last_response_status < 600, f"Invalid HTTP status: {self.last_response_status}"
-
-
-# DELETED: test_course_inventory_workflow_stateful - AttributeError: no attribute 'runTest'
-# This test was using an incorrect API for hypothesis RuleBasedStateMachine

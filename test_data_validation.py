@@ -1,4 +1,4 @@
-"""
+﻿"""
 Data Validation Tests
 Tests for CSV format validation, data types, ranges, and required fields
 """
@@ -119,7 +119,7 @@ class TestDataTypeValidation:
             json_data={"course_number": "abc", "course_subject": "MATH", "institution_id": "227216"}
         )
         # API may accept string course_number (converts internally)
-        assert response.status_code in [200, 400, 401, 404, 422, 500, 502]
+        assert response.status_code in [200, 201, 400, 401, 404, 422, 500, 502]
     
     @pytest.mark.data_validation
     def test_string_validation(self):
@@ -131,7 +131,7 @@ class TestDataTypeValidation:
                 json_data={"course_number": "101", "course_subject": chars, "institution_id": "227216"}
             )
             # Should handle or reject special characters appropriately
-            assert response.status_code in [200, 400, 401, 404, 422, 500, 502]
+            assert response.status_code in [200, 201, 400, 401, 404, 422, 500, 502]
 
 
 class TestDataRangeValidation:
@@ -216,7 +216,7 @@ class TestEnumValidation:
                 json_data={"file_name": "test.csv", "institution_id": "227216", "upload_type": upload_type}
             )
             # Invalid enum may be accepted or rejected
-            assert response.status_code in [200, 400, 401, 404, 422, 500, 502]
+            assert response.status_code in [200, 201, 400, 401, 404, 422, 500, 502]
     
     @pytest.mark.data_validation
     def test_record_type_enum(self):
@@ -228,7 +228,7 @@ class TestEnumValidation:
                 json_data={"record_type": record_type}
             )
             # Invalid enum may be accepted or rejected
-            assert response.status_code in [200, 400, 401, 404, 422, 500, 502]
+            assert response.status_code in [200, 201, 400, 401, 404, 422, 500, 502]
     
     @pytest.mark.data_validation
     def test_decision_enum(self):

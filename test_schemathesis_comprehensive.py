@@ -115,27 +115,6 @@ class SecurityTestHelpers:
         ]
 
 
-# ========== BASIC SCHEMATHESIS TESTS ==========
-
-# DELETED: test_api_schema_compliance
-# This parametrized test was causing flaky failures, hypothesis errors, and rate limiting issues
-# The test was too aggressive with 200 examples and was hitting API rate limits (429 errors)
-# Individual endpoint tests are covered in test_explicit_scenarios.py instead
-
-# @schema.parametrize()
-# @settings(
-#     suppress_health_check=[HealthCheck.too_slow, HealthCheck.data_too_large, HealthCheck.filter_too_much],
-#     max_examples=200,
-#     deadline=None
-# )
-# def test_api_schema_compliance(case):
-#     """Test all endpoints for OpenAPI schema compliance"""
-#     case.headers = case.headers or {}
-#     case.headers["x-access-token"] = ACCESS_TOKEN
-#     response = case.call()
-#     case.validate_response(response)
-
-
 # ========== ENDPOINT-SPECIFIC TESTS ==========
 
 class TestPublishCourseInventory:

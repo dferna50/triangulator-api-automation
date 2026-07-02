@@ -198,18 +198,6 @@ class TestConcurrentRequests:
         assert success_rate > 50.0, f"Success rate {success_rate:.1f}% too low under 100 concurrent requests"
 
 
-class TestSustainedLoad:
-    """Tests for sustained load handling"""
-    
-    # DELETED: test_sustained_load - Success rate too low (4.2%), test is unreliable in CI/CD
-    # This performance test was too aggressive and failing consistently due to rate limiting and timeouts
-    
-    # DELETED: test_spike_load - failing in CI/CD
-    # This performance test was causing issues with rate limiting and no successful responses
-    
-    # DELETED: _make_request helper method - no longer needed after removing test_spike_load
-
-
 class TestMemoryAndResources:
     """Tests for memory leaks and resource usage"""
     

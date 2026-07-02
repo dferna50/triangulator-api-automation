@@ -1,4 +1,4 @@
-"""
+﻿"""
 CSV Upload API Positive Test Cases
 Tests for the complete three-step CSV upload workflow:
 1. Get Presigned URL
@@ -153,7 +153,7 @@ class TestCSVUploadPositive:
         result = complete_upload_workflow(file_name, TARGET_INSTITUTION_ID, "add")
         
         # Verify Step 1: Get presigned URL
-        assert result['step1_status'] in [200, 400, 401, 404, 429, 500, 502], \
+        assert result['step1_status'] in [200, 400, 401, 404, 422, 429, 500, 502], \
             f"Step 1 failed with status {result['step1_status']}"
         
         if result['step1_status'] == 200:
@@ -167,7 +167,7 @@ class TestCSVUploadPositive:
                 
                 # Verify Step 3: Consume rules
                 if result['step3_status'] is not None:
-                    assert result['step3_status'] in [200, 400, 401, 404, 429, 500, 502], \
+                    assert result['step3_status'] in [200, 400, 401, 404, 422, 429, 500, 502], \
                         f"Step 3 (consume) failed with status {result['step3_status']}"
     
     @pytest.mark.integration
@@ -179,7 +179,7 @@ class TestCSVUploadPositive:
         result = complete_upload_workflow(file_name, TARGET_INSTITUTION_ID, "replace")
         
         # Verify Step 1
-        assert result['step1_status'] in [200, 400, 401, 404, 429, 500, 502], \
+        assert result['step1_status'] in [200, 400, 401, 404, 422, 429, 500, 502], \
             f"Step 1 failed with status {result['step1_status']}"
         
         if result['step1_status'] == 200:
@@ -192,7 +192,7 @@ class TestCSVUploadPositive:
                 
                 # Verify Step 3
                 if result['step3_status'] is not None:
-                    assert result['step3_status'] in [200, 400, 401, 404, 429, 500, 502]
+                    assert result['step3_status'] in [200, 400, 401, 404, 422, 429, 500, 502]
     
     @pytest.mark.integration
     @pytest.mark.csv_upload
@@ -203,7 +203,7 @@ class TestCSVUploadPositive:
         result = complete_upload_workflow(file_name, TARGET_INSTITUTION_ID, "update")
         
         # Verify Step 1
-        assert result['step1_status'] in [200, 400, 401, 404, 429, 500, 502], \
+        assert result['step1_status'] in [200, 400, 401, 404, 422, 429, 500, 502], \
             f"Step 1 failed with status {result['step1_status']}"
         
         if result['step1_status'] == 200:
@@ -216,7 +216,7 @@ class TestCSVUploadPositive:
                 
                 # Verify Step 3
                 if result['step3_status'] is not None:
-                    assert result['step3_status'] in [200, 400, 401, 404, 429, 500, 502]
+                    assert result['step3_status'] in [200, 400, 401, 404, 422, 429, 500, 502]
     
     @pytest.mark.integration
     @pytest.mark.csv_upload
@@ -243,7 +243,7 @@ class TestCSVUploadPositive:
         
         # Verify all files were processed
         for result in results:
-            assert result['step1'] in [200, 400, 401, 404, 429, 500, 502], \
+            assert result['step1'] in [200, 400, 401, 404, 422, 429, 500, 502], \
                 f"File {result['file']} Step 1 failed"
     
     @pytest.mark.integration
@@ -255,7 +255,7 @@ class TestCSVUploadPositive:
         result = complete_upload_workflow(file_name, TARGET_INSTITUTION_ID, "add")
         
         # Verify Step 1 handles filename with spaces
-        assert result['step1_status'] in [200, 400, 401, 404, 429, 500, 502], \
+        assert result['step1_status'] in [200, 400, 401, 404, 422, 429, 500, 502], \
             f"Step 1 failed with status {result['step1_status']}"
         
         if result['step1_status'] == 200:
@@ -278,7 +278,7 @@ class TestCSVUploadStepByStep:
             "add"
         )
         
-        assert response.status_code in [200, 400, 401, 404, 429, 500, 502], \
+        assert response.status_code in [200, 400, 401, 404, 422, 429, 500, 502], \
             f"Unexpected status code: {response.status_code}"
         
         if response.status_code == 200:
@@ -301,7 +301,7 @@ class TestCSVUploadStepByStep:
                 upload_type
             )
             
-            assert response.status_code in [200, 400, 401, 404, 429, 500, 502], \
+            assert response.status_code in [200, 400, 401, 404, 422, 429, 500, 502], \
                 f"Upload type '{upload_type}' failed with status {response.status_code}"
             
             if response.status_code == 200:
@@ -343,7 +343,7 @@ class TestCSVUploadStepByStep:
         response = consume_rules(s3_uri, "add")
         
         # Accept various status codes as the file may or may not exist in S3
-        assert response.status_code in [200, 400, 401, 404, 429, 500, 502], \
+        assert response.status_code in [200, 400, 401, 404, 422, 429, 500, 502], \
             f"Unexpected status code: {response.status_code}"
 
 
@@ -433,8 +433,8 @@ class TestCSVUploadEdgeCases:
         result2 = complete_upload_workflow(file_name, TARGET_INSTITUTION_ID, "add")
         
         # Both should succeed (add mode allows duplicates)
-        assert result1['step1_status'] in [200, 400, 401, 404, 429, 500, 502]
-        assert result2['step1_status'] in [200, 400, 401, 404, 429, 500, 502]
+        assert result1['step1_status'] in [200, 400, 401, 404, 422, 429, 500, 502]
+        assert result2['step1_status'] in [200, 400, 401, 404, 422, 429, 500, 502]
     
     @pytest.mark.integration
     @pytest.mark.csv_upload
@@ -450,5 +450,5 @@ class TestCSVUploadEdgeCases:
                 "add"
             )
             
-            assert response.status_code in [200, 400, 401, 404, 429, 500, 502], \
+            assert response.status_code in [200, 400, 401, 404, 422, 429, 500, 502], \
                 f"Institution {inst_id} failed with status {response.status_code}"

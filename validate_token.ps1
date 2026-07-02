@@ -20,8 +20,9 @@ function Show-Help {
     Write-Host "  .\validate_token.ps1 -Help            # Show this help message"
     Write-Host ""
     Write-Host "Environment Variables Required:" -ForegroundColor Yellow
-    Write-Host "  BASE_URL      - API base URL (e.g., https://api-qa.creditmobility.net)"
-    Write-Host "  ACCESS_TOKEN  - Your API access token"
+    Write-Host "  BASE_URL           - API base URL (e.g., https://api-qa.creditmobility.net)"
+    Write-Host "  ACCESS_TOKEN       - Your standard API access token"
+    Write-Host "  ORG_ACCESS_TOKEN   - (Optional) Your Organization API access token"
     Write-Host ""
     Write-Host "Examples:" -ForegroundColor Yellow
     Write-Host "  # Set variables manually then validate"
@@ -61,12 +62,26 @@ function Set-EnvironmentVariables {
         $maskedToken = "*" * 20 + $currentToken.Substring([Math]::Max(0, $currentToken.Length - 8))
         Write-Host "Current ACCESS_TOKEN: $maskedToken" -ForegroundColor Gray
     }
-    $newToken = Read-Host "Enter ACCESS_TOKEN (press Enter to keep current)"
+    $newToken = Read-Host "Enter ACCESS_TOKEN (press Enter to keep current, leave blank to skip)"
     if ($newToken) {
         $env:ACCESS_TOKEN = $newToken.Trim()
         Write-Host "✓ ACCESS_TOKEN updated" -ForegroundColor Green
-    } elseif (-not $currentToken) {
-        Write-Host "✗ ACCESS_TOKEN is required!" -ForegroundColor Red
+    }
+    
+    # Get ORG_ACCESS_TOKEN
+    $currentOrgToken = $env:ORG_ACCESS_TOKEN
+    if ($currentOrgToken) {
+        $maskedOrgToken = "*" * 20 + $currentOrgToken.Substring([Math]::Max(0, $currentOrgToken.Length - 8))
+        Write-Host "Current ORG_ACCESS_TOKEN: $maskedOrgToken" -ForegroundColor Gray
+    }
+    $newOrgToken = Read-Host "Enter ORG_ACCESS_TOKEN (press Enter to keep current, leave blank to skip)"
+    if ($newOrgToken) {
+        $env:ORG_ACCESS_TOKEN = $newOrgToken.Trim()
+        Write-Host "✓ ORG_ACCESS_TOKEN updated" -ForegroundColor Green
+    }
+    
+    if (-not $env:ACCESS_TOKEN -and -not $env:ORG_ACCESS_TOKEN) {
+        Write-Host "✗ At least one token (ACCESS_TOKEN or ORG_ACCESS_TOKEN) is required!" -ForegroundColor Red
         return $false
     }
     
@@ -112,11 +127,12 @@ if (-not $BaseUrl) {
     exit 1
 }
 
-if (-not $AccessToken) {
-    Write-Host "❌ ERROR: ACCESS_TOKEN is not set" -ForegroundColor Red
+if (-not $AccessToken -and -not $env:ORG_ACCESS_TOKEN) {
+    Write-Host "❌ ERROR: ACCESS_TOKEN and ORG_ACCESS_TOKEN are not set" -ForegroundColor Red
     Write-Host ""
-    Write-Host "Set it using:" -ForegroundColor Yellow
+    Write-Host "Set at least one using:" -ForegroundColor Yellow
     Write-Host "  `$env:ACCESS_TOKEN = 'your-token-here'" -ForegroundColor Gray
+    Write-Host "  `$env:ORG_ACCESS_TOKEN = 'your-org-token-here'" -ForegroundColor Gray
     Write-Host ""
     Write-Host "Or run with -SetEnvVars flag for interactive setup:" -ForegroundColor Yellow
     Write-Host "  .\validate_token.ps1 -SetEnvVars" -ForegroundColor Gray
@@ -125,8 +141,14 @@ if (-not $AccessToken) {
 }
 
 Write-Host "✓ BASE_URL: $BaseUrl" -ForegroundColor Green
-$maskedToken = "*" * 20 + $AccessToken.Substring([Math]::Max(0, $AccessToken.Length - 8))
-Write-Host "✓ ACCESS_TOKEN: $maskedToken" -ForegroundColor Green
+if ($AccessToken) {
+    $maskedToken = "*" * 20 + $AccessToken.Substring([Math]::Max(0, $AccessToken.Length - 8))
+    Write-Host "✓ ACCESS_TOKEN: $maskedToken" -ForegroundColor Green
+}
+if ($env:ORG_ACCESS_TOKEN) {
+    $maskedOrgToken = "*" * 20 + $env:ORG_ACCESS_TOKEN.Substring([Math]::Max(0, $env:ORG_ACCESS_TOKEN.Length - 8))
+    Write-Host "✓ ORG_ACCESS_TOKEN: $maskedOrgToken" -ForegroundColor Green
+}
 Write-Host ""
 
 # Run Python validation

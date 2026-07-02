@@ -238,21 +238,6 @@ class TestPublishCourseInventoryProperties:
         )
         assert response.status_code in [200, 404, 429, 500, 502], f"Unexpected status: {response.status_code}"
     
-    # REMOVED: API does not have institution_id parameter
-    # User feedback: "does not have a parameter institution_id please remove"
-    # @given(
-    #     institution_id=invalid_institution_id(),
-    # )
-    # @settings()
-    # def test_invalid_institution_id_rejected(self, institution_id):
-    #     """Invalid institution IDs should be rejected"""
-    #     response = requests.get(
-    #         f"{BASE_URL}/publish-course-inventory",
-    #         headers={"x-access-token": ACCESS_TOKEN},
-    #         params={"institution_id": institution_id}
-    #     )
-    #     assert response.status_code in [400, 422, 429, 500, 502], f"Invalid ID accepted: {institution_id}"
-    
     @given(
         institution_id=valid_institution_id(),
         course_subject=valid_course_subject(),
