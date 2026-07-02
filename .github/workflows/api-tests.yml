@@ -30,18 +30,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
-    - name: Validate Access Token
-      env:
-        BASE_URL: ${{ secrets.BASE_URL }}
-        ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-      run: |
-        echo "Validating API access token..."
-        python token_manager.py
-        if [ $? -ne 0 ]; then
-          echo "::error::Access token validation failed! Update the ACCESS_TOKEN secret in GitHub."
-          exit 1
-        fi
-    
+   
     - name: Run Tests
       env:
         BASE_URL: ${{ secrets.BASE_URL }}
