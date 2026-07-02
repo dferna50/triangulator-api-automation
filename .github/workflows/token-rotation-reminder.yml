@@ -2,8 +2,8 @@ name: Token Rotation Reminder
 
 on:
   schedule:
-    # Run weekly on Monday at 9 AM UTC
-    - cron: '0 9 * * 1'
+    # Run weekly on Friday at 4:30 AM UTC
+    - cron: '30 4 * * 5'
   workflow_dispatch:
 
 jobs:

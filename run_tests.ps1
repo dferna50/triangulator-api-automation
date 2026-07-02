@@ -2,23 +2,23 @@
 # Usage: .\run_tests.ps1 [test_type]
 
 param(
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false)]
     [ValidateSet("all", "schema", "security", "property", "stateful", "smoke", "quick")]
     [string]$TestType = "all",
     
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false)]
     [bool]$Parallel = $true,
     
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false)]
     [switch]$Coverage,
     
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false)]
     [switch]$HtmlReport,
     
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false)]
     [int]$Workers = 4,
     
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false)]
     [ValidateSet("ci", "fast", "default", "thorough", "exhaustive")]
     [string]$HypothesisProfile = "ci"
 )
@@ -54,7 +54,8 @@ if (-not (Test-Path "venv")) {
     python -m venv venv
     .\venv\Scripts\Activate.ps1
     pip install -r requirements.txt
-} else {
+}
+else {
     .\venv\Scripts\Activate.ps1
 }
 
@@ -113,7 +114,8 @@ switch ($TestType) {
 if ($Parallel) {
     Write-Host "Enabling parallel execution with $Workers workers..." -ForegroundColor $InfoColor
     $pytestArgs += "-n", $Workers
-} else {
+}
+else {
     Write-Host "Running tests sequentially (use -Parallel to enable parallel execution)..." -ForegroundColor Yellow
 }
 
@@ -159,7 +161,8 @@ Write-Host "Exit Code: $exitCode" -ForegroundColor $(if ($exitCode -eq 0) { $Suc
 
 if ($exitCode -eq 0) {
     Write-Host "`n All tests passed!" -ForegroundColor $SuccessColor
-} else {
+}
+else {
     Write-Host "`n Some tests failed!" -ForegroundColor $ErrorColor
 }
 
